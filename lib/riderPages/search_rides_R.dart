@@ -14,6 +14,8 @@ class SearchRidesR extends StatelessWidget {
   Future<void> processRide(EUser user, String rideId) async {
     user.hasActiveRide = true;
     user.rideUids.add(rideId);
+    user.activeRideUid =
+        rideId; // Setting the active ride UID when the ride is accepted
     String? currentUserEmail = FirebaseAuth.instance.currentUser?.email;
     if (currentUserEmail != null) {
       await FirebaseFirestore.instance
@@ -32,6 +34,24 @@ class SearchRidesR extends StatelessWidget {
         ride.tripStatus =
             'Accepted'; // Here we change the tripStatus to 'Accepted'
         await rideRef.update(ride.toMap());
+
+        // Get driver document and update
+        DocumentReference driverRef =
+            FirebaseFirestore.instance.collection('Users').doc(ride.driverId);
+        DocumentSnapshot driverDoc = await driverRef.get();
+
+        if (driverDoc.exists) {
+          Map<String, dynamic> driverData =
+              driverDoc.data()! as Map<String, dynamic>;
+          EUser driver = EUser.fromMap(driverData);
+
+          if (!driver.hasActiveDrive && driver.activeDriveUid.isEmpty) {
+            await driverRef.update({
+              'hasActiveDrive': true,
+              'activeDriveUid': rideId,
+            });
+          }
+        }
       }
     }
   }

@@ -5,6 +5,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_google_places_sdk/flutter_google_places_sdk.dart';
 import '../components/auto_complete_text_field.dart';
+import '../dataAbstraction/EUser.dart';
 import '../dataAbstraction/Rides.dart';
 import '../private/api_keys.dart';
 
@@ -95,6 +96,19 @@ class AddRidesDState extends State<AddRidesD> {
     });
   }
 
+  Stream<bool> getDriverStatus() {
+    final currentUser = FirebaseAuth.instance.currentUser;
+    return FirebaseFirestore.instance
+        .collection('Users')
+        .doc(currentUser?.email)
+        .snapshots()
+        .map((doc) {
+      Map<String, dynamic> driverData = doc.data()! as Map<String, dynamic>;
+      EUser driver = EUser.fromMap(driverData);
+      return driver.hasActiveDrive;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final currentUser = FirebaseAuth.instance.currentUser;
@@ -134,16 +148,6 @@ class AddRidesDState extends State<AddRidesD> {
                             ConnectionState.waiting) {
                           return const CircularProgressIndicator();
                         }
-
-                        // Check if any ride is accepted
-                        bool isAnyRideAccepted = snapshot.data!.docs.any(
-                          (DocumentSnapshot document) {
-                            Map<String, dynamic> data =
-                                document.data()! as Map<String, dynamic>;
-                            Ride ride = Ride.fromMap(data, document.id);
-                            return ride.riderIds.isNotEmpty;
-                          },
-                        );
 
                         return ListView(
                           children: snapshot.data!.docs
@@ -208,46 +212,31 @@ class AddRidesDState extends State<AddRidesD> {
               ),
             ],
           ),
-          StreamBuilder<QuerySnapshot>(
-            stream: FirebaseFirestore.instance
-                .collection('Rides')
-                .where('driverId', isEqualTo: currentUser?.email)
-                .snapshots(),
-            builder:
-                (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
-              if (snapshot.hasError) {
-                return const Text('Something went wrong');
-              }
-
+          StreamBuilder<bool>(
+            stream: getDriverStatus(),
+            builder: (BuildContext context, AsyncSnapshot<bool> snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
-                return const SizedBox.shrink(); // Returns an empty widget
-              }
-
-              // Check if any ride is accepted
-              bool isAnyRideAccepted = snapshot.data!.docs.any(
-                (DocumentSnapshot document) {
-                  Map<String, dynamic> data =
-                      document.data()! as Map<String, dynamic>;
-                  Ride ride = Ride.fromMap(data, document.id);
-                  return ride.riderIds.isNotEmpty;
-                },
-              );
-
-              // The overlay widget
-              return isAnyRideAccepted && !_isFormVisible
-                  ? Container(
-                      color: Colors.grey.shade500.withOpacity(0.8),
-                      width: MediaQuery.of(context).size.width,
-                      height: MediaQuery.of(context).size.height,
-                      child: const Center(
-                        child: Text(
-                          'Ride Accepted!',
-                          style: TextStyle(fontSize: 24, color: Colors.white),
+                return const SizedBox
+                    .shrink(); // Returns an empty widget while waiting
+              } else if (snapshot.hasError) {
+                return Text('Error: ${snapshot.error}');
+              } else {
+                // The overlay widget
+                return (snapshot.data! && !_isFormVisible)
+                    ? Container(
+                        color: Colors.grey.shade500.withOpacity(0.8),
+                        width: MediaQuery.of(context).size.width,
+                        height: MediaQuery.of(context).size.height,
+                        child: const Center(
+                          child: Text(
+                            'Ride Accepted!',
+                            style: TextStyle(fontSize: 24, color: Colors.white),
+                          ),
                         ),
-                      ),
-                    )
-                  : const SizedBox
-                      .shrink(); // Returns an empty widget if no ride is accepted or the form is visible
+                      )
+                    : const SizedBox
+                        .shrink(); // Returns an empty widget if no ride is accepted or the form is visible
+              }
             },
           ),
         ],

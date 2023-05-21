@@ -3,10 +3,11 @@ import 'package:eduryde/commonPages/past_rides.dart';
 import 'package:eduryde/commonPages/settings.dart';
 import 'package:eduryde/driverPages/add_rides_D.dart';
 import 'package:eduryde/riderPages/search_rides_R.dart';
-import 'package:eduryde/commonPages/active_rides.dart';
+import 'package:eduryde/riderPages/active_rides_R.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import '../dataAbstraction/EUser.dart';
+import '../driverPages/active_rides_D.dart';
 
 class RootPage extends StatefulWidget {
   const RootPage({Key? key}) : super(key: key);
@@ -48,7 +49,7 @@ class _RootPageState extends State<RootPage> {
 
     riderPages = [
       const SearchRidesR(),
-      ActiveRides(),
+      ActiveRidesR(),
       const PastRides(),
       SettingsPage(
         onModeChanged: (bool isDriver) {
@@ -62,7 +63,7 @@ class _RootPageState extends State<RootPage> {
 
     driverPages = [
       const AddRidesD(),
-      ActiveRides(),
+      ActiveRidesD(),
       const PastRides(),
       SettingsPage(
         onModeChanged: (bool isDriver) {

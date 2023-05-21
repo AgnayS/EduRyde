@@ -9,6 +9,9 @@ class EUser {
   String paypalId;
   String venmoId;
   bool hasActiveRide;
+  String activeRideUid;
+  bool hasActiveDrive;
+  String activeDriveUid;
   bool hasCar;
   bool isDriver;
   bool isOnboarded;
@@ -25,6 +28,9 @@ class EUser {
     required this.paypalId,
     required this.venmoId,
     required this.hasActiveRide,
+    required this.activeRideUid,
+    required this.hasActiveDrive,
+    required this.activeDriveUid,
     required this.hasCar,
     required this.isDriver,
     required this.isOnboarded,
@@ -44,6 +50,9 @@ class EUser {
       'paypalId': paypalId,
       'venmoId': venmoId,
       'hasActiveRide': hasActiveRide,
+      'activeRideUid': activeRideUid,
+      'hasActiveDrive': hasActiveDrive,
+      'activeDriveUid': activeDriveUid,
       'hasCar': hasCar,
       'isDriver': isDriver,
       'isOnboarded': isOnboarded,
@@ -64,6 +73,9 @@ class EUser {
       paypalId: map['paypalId'],
       venmoId: map['venmoId'],
       hasActiveRide: map['hasActiveRide'],
+      activeRideUid: map['activeRideUid'],
+      hasActiveDrive: map['hasActiveDrive'],
+      activeDriveUid: map['activeDriveUid'],
       hasCar: map['hasCar'],
       isDriver: map['isDriver'],
       isOnboarded: map['isOnboarded'],
