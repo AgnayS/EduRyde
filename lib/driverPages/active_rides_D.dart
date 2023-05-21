@@ -70,7 +70,7 @@ class ActiveRidesDState extends State<ActiveRidesD> {
           getCurrentLocation();
           getRideDetails(); // Add this.
           Future.delayed(
-            const Duration(seconds: 3),
+            const Duration(seconds: 5),
             () {
               setState(() {
                 _mapRendered = true;
@@ -188,6 +188,29 @@ class ActiveRidesDState extends State<ActiveRidesD> {
     }
   }
 
+  
+
+  void startOrCompleteRide(String rideId, String status) async {
+    FirebaseFirestore firestore = FirebaseFirestore.instance;
+    // Update ride status
+    DocumentReference rideRef = firestore.collection('Rides').doc(rideId);
+    await rideRef.update({
+      'tripStatus': status,
+    });
+
+    fetchUserData().then((value) {
+      if (user!.hasActiveDrive) {
+        getCurrentLocation();
+        getRideDetails();
+        Future.delayed(const Duration(seconds: 2), () {
+          setState(() {
+            _mapRendered = true;
+          });
+        });
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     if (!_mapRendered) {
@@ -282,25 +305,163 @@ class ActiveRidesDState extends State<ActiveRidesD> {
                   title: Text("Departure: ${activeRide!.departureTime}"),
                 ),
                 ListTile(
-                  leading: const Icon(Icons.badge),
-                  title: Text("Driver: ${activeRide!.driverId}"),
-                ),
-                ListTile(
                   leading: const Icon(Icons.attach_money),
                   title: Text("Fare: ${activeRide!.fare}"),
                 ),
                 ElevatedButton(
                   onPressed: () {
-                    leaveTrip(activeRide!.id);
+                    cancelRide(activeRide!.id);
                   },
-                  child: const Text('Leave Trip'),
+                  child: const Text('Cancel Ride'),
                 ),
+                if (activeRide!.tripStatus == "Accepted")
+                  ElevatedButton.icon(
+                    onPressed: () {
+                      startRide(activeRide!.id);
+                    },
+                    icon: const Icon(Icons.play_arrow),
+                    label: const Text('Start Ride'),
+                  ),
+                if (activeRide!.tripStatus == "InProgress")
+                  ElevatedButton.icon(
+                    onPressed: () {
+                      completeRide(activeRide!.id);
+                    },
+                    icon: const Icon(Icons.check),
+                    label: const Text('Complete Ride'),
+                  ),
               ],
             ),
           ),
         ],
       ),
     );
+  }
+
+  void startRide(String rideId) async {
+    FirebaseFirestore firestore = FirebaseFirestore.instance;
+
+    // Update tripStatus to 'InProgress'
+    DocumentReference rideRef = firestore.collection('Rides').doc(rideId);
+    await rideRef.update({
+      'tripStatus': 'InProgress',
+    });
+
+    // Refresh UI
+    fetchUserData().then((value) {
+      if (user!.hasActiveDrive) {
+        getCurrentLocation();
+        getRideDetails();
+        Future.delayed(const Duration(seconds: 2), () {
+          setState(() {
+            _mapRendered = true;
+          });
+        });
+      }
+    });
+  }
+
+  void completeRide(String rideId) async {
+    FirebaseFirestore firestore = FirebaseFirestore.instance;
+
+    // Fetch ride details
+    DocumentReference rideRef = firestore.collection('Rides').doc(rideId);
+    DocumentSnapshot rideDoc = await rideRef.get();
+    Map<String, dynamic> rideData = rideDoc.data() as Map<String, dynamic>;
+
+    List<String> riderIds =
+        List<String>.from(rideData['riderIds'] as List<dynamic>);
+    String driverId =
+        rideData['driverId'] as String; // Fetch the driver's userId
+
+    // Set hasActiveRide to false for all riders and empty activeRideUid
+    for (String userId in riderIds) {
+      DocumentReference userRef = firestore.collection('Users').doc(userId);
+      await userRef.update({
+        'hasActiveRide': false,
+        'activeRideUid': "",
+      });
+    }
+
+    // Set hasActiveDrive to false for the driver and empty activeDriveUid
+    DocumentReference driverRef = firestore.collection('Users').doc(driverId);
+    await driverRef.update({
+      'hasActiveDrive': false,
+      'activeDriveUid': "",
+    });
+
+    // Update tripStatus to 'Completed'
+    await rideRef.update({
+      'tripStatus': 'Completed',
+    });
+
+    setState(() {
+      _mapRendered = false;
+    });
+
+    // Refresh UI
+    fetchUserData().then((value) {
+      if (user!.hasActiveDrive) {
+        getCurrentLocation();
+        getRideDetails();
+        Future.delayed(const Duration(seconds: 2), () {
+          setState(() {
+            _mapRendered = true;
+          });
+        });
+      }
+    });
+  }
+
+  void cancelRide(String rideId) async {
+    FirebaseFirestore firestore = FirebaseFirestore.instance;
+
+    // Fetch ride details
+    DocumentReference rideRef = firestore.collection('Rides').doc(rideId);
+    DocumentSnapshot rideDoc = await rideRef.get();
+    Map<String, dynamic> rideData = rideDoc.data() as Map<String, dynamic>;
+    Ride ride = Ride.fromMap(rideData, rideDoc.id);
+
+    List<String> riderIds =
+        List<String>.from(rideData['riderIds'] as List<dynamic>);
+    String driverId =
+        rideData['driverId'] as String; // Fetch the driver's userId
+
+
+    DocumentReference driverRef = firestore.collection('Users').doc(ride.driverId);
+    await driverRef.update({
+      'hasActiveDrive': false,
+      'activeDriveUid': "",
+    });
+
+    // Set hasActiveRide to false for all riders and empty activeRideUid
+    for (String userId in riderIds) {
+      DocumentReference userRef = firestore.collection('Users').doc(userId);
+      await userRef.update({
+        'hasActiveRide': false,
+        'activeRideUid': "",
+      });
+    }
+    rideRef.delete();
+
+    // Set hasActiveDrive to false for the driver and empty activeDriveUid
+
+    // Now reset the map rendered flag so the overlay is shown
+    setState(() {
+      _mapRendered = false;
+    });
+
+    fetchUserData().then((value) {
+      if (user!.hasActiveDrive) {
+        getCurrentLocation();
+        getRideDetails();
+        Future.delayed(const Duration(seconds: 2), () {
+          setState(() {
+            _mapRendered = true;
+          });
+        });
+      }
+    });
   }
 
   void leaveTrip(String rideId) async {
@@ -420,7 +581,8 @@ class CustomGoogleMap extends StatelessWidget {
   final LocationData? currentLocation;
   final Set<Polyline> polylines;
 
-  const CustomGoogleMap({super.key, 
+  const CustomGoogleMap({
+    super.key,
     required this.controller,
     required this.currentLocation,
     required this.polylines,

@@ -30,7 +30,7 @@ class SearchRidesR extends StatelessWidget {
       if (rideDoc.exists) {
         Map<String, dynamic> rideData = rideDoc.data()! as Map<String, dynamic>;
         Ride ride = Ride.fromMap(rideData, rideDoc.id);
-        ride.riderIds.add(user.authUid);
+        ride.riderIds.add(currentUserEmail); // Using email instead of UID
         ride.tripStatus =
             'Accepted'; // Here we change the tripStatus to 'Accepted'
         await rideRef.update(ride.toMap());
@@ -110,9 +110,19 @@ class SearchRidesR extends StatelessWidget {
                           return const Text("Loading...");
                         }
 
+                        // Here we filter the documents by tripStatus
+                        List<DocumentSnapshot> rideDocs =
+                            snapshot.data!.docs.where((doc) {
+                          if (doc.data() != null) {
+                            var data = doc.data() as Map<String, dynamic>;
+                            Ride ride = Ride.fromMap(data, doc.id);
+                            return ride.tripStatus == 'Pending';
+                          }
+                          return false;
+                        }).toList();
+
                         return Column(
-                          children: snapshot.data!.docs
-                              .map((DocumentSnapshot document) {
+                          children: rideDocs.map((DocumentSnapshot document) {
                             Map<String, dynamic> data =
                                 document.data()! as Map<String, dynamic>;
                             Ride ride = Ride.fromMap(data, document.id);
