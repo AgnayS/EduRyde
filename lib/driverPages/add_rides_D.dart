@@ -137,6 +137,8 @@ class AddRidesDState extends State<AddRidesD> {
                       stream: FirebaseFirestore.instance
                           .collection('Rides')
                           .where('driverId', isEqualTo: currentUser?.email)
+                          .where('tripStatus',
+                              isEqualTo: 'Pending') // New condition here
                           .snapshots(),
                       builder: (BuildContext context,
                           AsyncSnapshot<QuerySnapshot> snapshot) {
