@@ -11,7 +11,7 @@ import '../dataAbstraction/EUser.dart';
 import '../dataAbstraction/Rides.dart';
 
 class ActiveRidesD extends StatefulWidget {
-  ActiveRidesD({Key? key}) : super(key: key);
+  const ActiveRidesD({Key? key}) : super(key: key);
 
   @override
   ActiveRidesDState createState() => ActiveRidesDState();
@@ -66,7 +66,7 @@ class ActiveRidesDState extends State<ActiveRidesD> {
     super.initState();
     fetchUserData().then(
       (value) {
-        if (user!.hasActiveRide) {
+        if (user!.hasActiveDrive) {
           getCurrentLocation();
           getRideDetails(); // Add this.
           Future.delayed(
@@ -106,10 +106,10 @@ class ActiveRidesDState extends State<ActiveRidesD> {
       if (userDoc.exists) {
         Map<String, dynamic> userData = userDoc.data() as Map<String, dynamic>;
         user = EUser.fromMap(userData);
-        if (user!.activeRideUid.isNotEmpty) {
+        if (user!.activeDriveUid.isNotEmpty) {
           DocumentSnapshot rideDoc = await FirebaseFirestore.instance
               .collection('Rides')
-              .doc(user!.activeRideUid)
+              .doc(user!.activeDriveUid)
               .get();
           if (rideDoc.exists) {
             Map<String, dynamic> rideData =
@@ -333,7 +333,6 @@ class ActiveRidesDState extends State<ActiveRidesD> {
         });
       }
 
-      // Update user's hasActiveRide to false and activeRideUid to ""
       DocumentReference userRef =
           firestore.collection('Users').doc(currentUserEmail);
       await userRef.update({
@@ -397,15 +396,15 @@ class RidesStreamBuilder extends StatelessWidget {
 
           // Update the route based on the trip status
           if (ride.tripStatus == "Accepted") {
-            ActiveRidesDState.getPolyPoints(
-              LatLng(ActiveRidesDState.currentLocation!.latitude!,
-                  ActiveRidesDState.currentLocation!.longitude!),
+            activeRidesDState.getPolyPoints(
+              LatLng(activeRidesDState.currentLocation!.latitude!,
+                  activeRidesDState.currentLocation!.longitude!),
               ActiveRidesDState.pickupLocation!,
             );
           } else if (ride.tripStatus == "InProgress") {
-            ActiveRidesDState.getPolyPoints(
-              LatLng(ActiveRidesDState.currentLocation!.latitude!,
-                  ActiveRidesDState.currentLocation!.longitude!),
+            activeRidesDState.getPolyPoints(
+              LatLng(activeRidesDState.currentLocation!.latitude!,
+                  activeRidesDState.currentLocation!.longitude!),
               ActiveRidesDState.destination!,
             );
           }
@@ -421,7 +420,7 @@ class CustomGoogleMap extends StatelessWidget {
   final LocationData? currentLocation;
   final Set<Polyline> polylines;
 
-  CustomGoogleMap({
+  const CustomGoogleMap({super.key, 
     required this.controller,
     required this.currentLocation,
     required this.polylines,
