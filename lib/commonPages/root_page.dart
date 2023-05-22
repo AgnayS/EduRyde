@@ -26,7 +26,7 @@ class _RootPageState extends State<RootPage> {
   late List<Widget> driverPages;
   ValueNotifier<bool> isDriverState = ValueNotifier(true);
 
-  List<Widget> get pages => isDriverState.value ? riderPages : driverPages;
+  List<Widget> get pages => isDriverState.value ?  riderPages : driverPages;
 
   void fetchUser() async {
     final user = FirebaseAuth.instance.currentUser;
@@ -56,7 +56,6 @@ class _RootPageState extends State<RootPage> {
           isDriverState.value = isDriver;
         },
         onCarOwnershipChanged: (bool hasCar) {
-          // Handle car ownership changes
         },
       ),
     ];
@@ -70,7 +69,6 @@ class _RootPageState extends State<RootPage> {
           isDriverState.value = isDriver;
         },
         onCarOwnershipChanged: (bool hasCar) {
-          // Handle car ownership changes
         },
       ),
     ];

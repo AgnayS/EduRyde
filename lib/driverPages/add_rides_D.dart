@@ -128,7 +128,7 @@ class AddRidesDState extends State<AddRidesD> {
                 padding: EdgeInsets.symmetric(horizontal: 10.0, vertical: 8.0),
                 child: TopText(
                   text: 'My Rydes',
-                ),
+                ), 
               ),
               Expanded(
                 child: Stack(
@@ -275,7 +275,7 @@ class AddRidesDState extends State<AddRidesD> {
           if (value == null || value.isEmpty) {
             return 'Please enter destination';
           }
-          return null; // return null when the input is valid
+          return null; 
         },
         places: places,
         placeValueNotifier: _destinationPlaceNotifier,
@@ -288,7 +288,7 @@ class AddRidesDState extends State<AddRidesD> {
           if (value == null || value.isEmpty) {
             return 'Please enter pickup location';
           }
-          return null; // return null when the input is valid
+          return null; 
         },
         places: places,
         placeValueNotifier: _pickupPlaceNotifier,

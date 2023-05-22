@@ -9,7 +9,9 @@ class SettingsPage extends StatefulWidget {
   final ValueChanged<bool> onCarOwnershipChanged;
 
   SettingsPage(
-      {super.key, required this.onModeChanged, required this.onCarOwnershipChanged});
+      {super.key,
+      required this.onModeChanged,
+      required this.onCarOwnershipChanged});
 
   @override
   _SettingsPageState createState() => _SettingsPageState();
@@ -18,6 +20,7 @@ class SettingsPage extends StatefulWidget {
 class _SettingsPageState extends State<SettingsPage> {
   bool isDriver = false;
   bool hasCar = false;
+  bool isLoading = true;
 
   @override
   void initState() {
@@ -44,6 +47,7 @@ class _SettingsPageState extends State<SettingsPage> {
         setState(() {
           isDriver = docSnapshot.get('isDriver');
           hasCar = docSnapshot.get('hasCar');
+          isLoading = false;
         });
       }
     }
@@ -51,6 +55,7 @@ class _SettingsPageState extends State<SettingsPage> {
 
   Future<void> signUserOut() async {
     await FirebaseAuth.instance.signOut();
+    // ignore: use_build_context_synchronously
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(
@@ -61,62 +66,66 @@ class _SettingsPageState extends State<SettingsPage> {
 
   @override
   Widget build(BuildContext context) {
-    //fetchUser();
-    return Scaffold(
-      backgroundColor: Colors.grey.shade300,
-      body: ListView(
-        children: <Widget>[
-          SwitchListTile(
-            title: Text("Do you want to drive?"),
-            value: isDriver,
-            onChanged: (bool newValue) {
-              setState(() {
-                isDriver = newValue;
-              });
-
-              final user = FirebaseAuth.instance.currentUser;
-              if (user != null) {
-                FirebaseFirestore.instance
-                    .collection('Users')
-                    .doc(user.email)
-                    .update({'isDriver': newValue}).then((_) {
-                  widget.onModeChanged(
-                      !newValue); // call the callback after update is done with the opposite value
+    if (isLoading) {
+      return Center(
+          child:
+              CircularProgressIndicator()); // or some other loading indicator
+    } else {
+      return Scaffold(
+        backgroundColor: Colors.grey.shade300,
+        body: ListView(
+          children: <Widget>[
+            SwitchListTile(
+              title: const Text("Do you want to drive?"),
+              value: isDriver,
+              onChanged: (bool newValue) {
+                setState(() {
+                  isDriver = newValue;
                 });
-              }
-            },
-          ),
-          SwitchListTile(
-            title: const Text('Do you own a car?'),
-            value: hasCar,
-            onChanged: (bool newValue) {
-              setState(() {
-                hasCar = newValue;
-              });
 
-              final user = FirebaseAuth.instance.currentUser;
-              if (user != null) {
-                FirebaseFirestore.instance
-                    .collection('Users')
-                    .doc(user.email)
-                    .update({'hasCar': newValue}).then((_) {
-                  widget.onCarOwnershipChanged(
-                      newValue); // call the callback after update is done
-                });
-              }
-            },
-          ),
-          ListTile(
-            title: const Text('Sign Out'),
-            trailing: IconButton(
-              icon: Icon(Icons.logout, color: Theme.of(context).primaryColor),
-              onPressed: () async {
-                await signUserOut();
+                final user = FirebaseAuth.instance.currentUser;
+                if (user != null) {
+                  FirebaseFirestore.instance
+                      .collection('Users')
+                      .doc(user.email)
+                      .update({'isDriver': newValue}).then((_) {
+                    widget.onModeChanged(!newValue);
+                  });
+                }
               },
             ),
-          ),
-        ],
-      ),
-    );
+            SwitchListTile(
+              title: const Text('Do you own a car?'),
+              value: hasCar,
+              onChanged: (bool newValue) {
+                setState(() {
+                  hasCar = newValue;
+                });
+
+                final user = FirebaseAuth.instance.currentUser;
+                if (user != null) {
+                  FirebaseFirestore.instance
+                      .collection('Users')
+                      .doc(user.email)
+                      .update({'hasCar': newValue}).then((_) {
+                    widget.onCarOwnershipChanged(
+                        newValue); // call the callback after update is done
+                  });
+                }
+              },
+            ),
+            ListTile(
+              title: const Text('Sign Out'),
+              trailing: IconButton(
+                icon: Icon(Icons.logout, color: Theme.of(context).primaryColor),
+                onPressed: () async {
+                  await signUserOut();
+                },
+              ),
+            ),
+          ],
+        ),
+      );
+    }
   }
 }

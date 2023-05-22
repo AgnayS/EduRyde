@@ -116,7 +116,7 @@ class SearchRidesR extends StatelessWidget {
                           if (doc.data() != null) {
                             var data = doc.data() as Map<String, dynamic>;
                             Ride ride = Ride.fromMap(data, doc.id);
-                            return ride.tripStatus == 'Pending';
+                            return ride.tripStatus != 'Completed';
                           }
                           return false;
                         }).toList();
