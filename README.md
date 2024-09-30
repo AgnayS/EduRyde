@@ -1,13 +1,7 @@
 # Eduryde
 
-An open source reverse ridesharing for college students
+An open source reverse ridesharing for college students, now rebuilt and refactored, using GetX and FlutterFire.
 
-## So basically another uber?
- 
-EduRyde incentivizes drivers to post where they are going. 
-Riders can then see avaialble rides and hop on at rates half that of uber.
-Also a cool way to get to know people on campus :)
+# Use the web version here:
 
-## Use the Web Version Here
-
-https://eduryde.web.app
+https://eduryde.com
